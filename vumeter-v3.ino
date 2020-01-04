@@ -3,8 +3,11 @@
 #define NUM_LEDS 200
 #define DATA_PIN 3
 
+#define ROWS 10
+#define COLUMNS 20
+
 int pointer = 0;
-int matrix[20];
+int matrix[COLUMNS];
 CRGB led_matrix[NUM_LEDS];
 
 int R = 10;
@@ -15,7 +18,7 @@ void setup() {
   FastLED.addLeds<NEOPIXEL, DATA_PIN>(led_matrix, NUM_LEDS);
 
   Serial.begin(9600); // setup serial
-  for (int i = 0; i < 20; i++) {
+  for (int i = 0; i < COLUMNS; i++) {
     matrix[i] = 0;
   }
 
@@ -63,17 +66,22 @@ void loop() {
   int sensorValue;
   int ledValue = 0;
 
-  for (int i = 0; i < 20; i++) {
+  for (int i = 0; i < COLUMNS; i++) {
     sensorValue = analogRead(A0);
     if (sensorValue > ledValue) {
       ledValue = sensorValue;
     }
   }
   ledValue = ledValue / 4; // modify to adjust sensitivity
+
+  if (ledValue > ROWS) {
+    ledValue = ROWS;
+  }
+
   matrix[pointer] = ledValue;
 
   pointer++;
-  if (pointer >= 20) {
+  if (pointer >= COLUMNS) {
     pointer = 0;
   }
   turnOnTheLEDs();
@@ -82,60 +90,41 @@ void loop() {
 
 void turnOnTheLEDs() {
   // go through columns
-  for (int i = 0; i < 20; i++) {
-
+  Serial.println();
+  for (int i = 0; i < COLUMNS; i++) {
+    Serial.print(matrix[i]);
+    Serial.print(" ");
     int leds = matrix[i];
-    if (leds > 10) {
-      leds = 10;
-    }
-
-    // turn on leds
-    for (int j = 0; j < leds; j++) {
+    for (int j = 0; j < ROWS; j++) {
+      int led = j;
       int offset;
 
       if (j % 2 != 0) {
         // every odd row, the signals goes backwards
-        offset = abs(i - 19);
+        offset = abs(i - (COLUMNS - 1));
         offset = offset - pointer;
         if (offset < 0) {
-          offset += 20;
+          offset += COLUMNS;
         }
-        led = j * 20 + offset;
+        led = j * COLUMNS + offset;
       } else {
         offset = i + pointer;
-        if (offset >= 20) {
-          offset -= 20;
+        if (offset >= COLUMNS) {
+          offset -= COLUMNS;
         }
-        led = j * 20 + offset;
+        led = j * COLUMNS + offset;
       }
-      led_matrix[led].r = R;
-      led_matrix[led].g = G;
-      led_matrix[led].b = B;
-    }
 
-    // turn off above the desired level
-    for (int j = leds; j < 10; j++) {
-
-      int offset;
-
-      if (j % 2 != 0) {
-        // every odd row, the signals goes backwards
-        offset = abs(i - 19);
-        offset = offset - pointer;
-        if (offset < 0) {
-          offset += 20;
-        }
-        led = j * 20 + offset;
+      if (j <= leds) {
+        led_matrix[led].r = R;
+        led_matrix[led].g = G;
+        led_matrix[led].b = B;
       } else {
-        offset = i + pointer;
-        if (offset >= 20) {
-          offset -= 20;
-        }
-        led = j * 20 + offset;
+        led_matrix[led].r = 0;
+        led_matrix[led].g = 0;
+        led_matrix[led].b = 0;
       }
-      led_matrix[led].r = 0;
-      led_matrix[led].g = 0;
-      led_matrix[led].b = 0;
+
     }
   }
   FastLED.show();
