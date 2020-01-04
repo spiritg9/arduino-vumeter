@@ -91,7 +91,6 @@ void turnOnTheLEDs() {
 
     // turn on leds
     for (int j = 0; j < leds; j++) {
-      int led = j;
       int offset;
 
       if (j % 2 != 0) {
@@ -116,11 +115,11 @@ void turnOnTheLEDs() {
 
     // turn off above the desired level
     for (int j = leds; j < 10; j++) {
-      // every odd row, the signals goes backwards
-      int led = j;
+
       int offset;
 
       if (j % 2 != 0) {
+        // every odd row, the signals goes backwards
         offset = abs(i - 19);
         offset = offset - pointer;
         if (offset < 0) {
