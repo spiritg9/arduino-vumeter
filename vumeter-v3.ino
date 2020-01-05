@@ -6,7 +6,6 @@
 #define ROWS 10
 #define COLUMNS 20
 
-int pointer = 0;
 int matrix[COLUMNS];
 CRGB led_matrix[NUM_LEDS];
 
@@ -78,12 +77,12 @@ void loop() {
     ledValue = ROWS;
   }
 
-  matrix[pointer] = ledValue;
-
-  pointer++;
-  if (pointer >= COLUMNS) {
-    pointer = 0;
+  for (int k = COLUMNS; k > 0; k--) {
+    matrix[k] = matrix[k - 1];
   }
+
+  matrix[0] = ledValue;
+
   turnOnTheLEDs();
   delay(75);
 }
@@ -95,27 +94,25 @@ void turnOnTheLEDs() {
     Serial.print(matrix[i]);
     Serial.print(" ");
     int leds = matrix[i];
+
     for (int j = 0; j < ROWS; j++) {
-      int led = j;
       int offset;
+      int led;
+
+
+      offset = i;
+      if (offset >= COLUMNS) {
+        offset -= COLUMNS;
+      }
 
       if (j % 2 != 0) {
         // every odd row, the signals goes backwards
-        offset = abs(i - (COLUMNS - 1));
-        offset = offset - pointer;
-        if (offset < 0) {
-          offset += COLUMNS;
-        }
-        led = j * COLUMNS + offset;
-      } else {
-        offset = i + pointer;
-        if (offset >= COLUMNS) {
-          offset -= COLUMNS;
-        }
-        led = j * COLUMNS + offset;
+        offset = abs(offset - (COLUMNS - 1));
       }
 
-      if (j <= leds) {
+      led = j * COLUMNS + offset;
+
+      if (j < leds) {
         led_matrix[led].r = R;
         led_matrix[led].g = G;
         led_matrix[led].b = B;
