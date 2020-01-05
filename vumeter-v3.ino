@@ -6,9 +6,13 @@
 #define ROWS 10
 #define COLUMNS 20
 
+
+
 int matrix[COLUMNS];
 CRGB led_matrix[NUM_LEDS];
 
+int timeout = 75;
+int mode = 0;
 int R = 10;
 int G = 10;
 int B = 10;
@@ -28,36 +32,77 @@ void serialEvent() {
   String s = "";
   while (Serial.available()) {
     s = Serial.readString();
-    if (s[0] == '#') {
-      char rstr[3];
-      rstr[0] = s[1];
-      rstr[1] = s[2];
-      rstr[2] = s[3];
-      R = charToInt(rstr);
+    switch (s[0]) {
+      case '#':
+        char rstr[4];
+        rstr[0] = '0';
+        rstr[1] = s[1];
+        rstr[2] = s[2];
+        rstr[3] = s[3];
+        R = charToInt(rstr);
 
-      char gstr[3];
-      gstr[0] = s[5];
-      gstr[1] = s[6];
-      gstr[2] = s[7];
-      G = charToInt(gstr);
+        char gstr[4];
+        gstr[0] = '0';
+        gstr[1] = s[5];
+        gstr[2] = s[6];
+        gstr[3] = s[7];
+        G = charToInt(gstr);
 
-      char bstr[3];
-      bstr[0] = s[9];
-      bstr[1] = s[10];
-      bstr[2] = s[11];
-      B = charToInt(bstr);
+        char bstr[4];
+        bstr[0] = '0';
+        bstr[1] = s[9];
+        bstr[2] = s[10];
+        bstr[3] = s[11];
+        B = charToInt(bstr);
+        break;
+      case 'm':
+        setMode(s[1]);
+        break;
+      case 'd':
+        Serial.println("setting delay");
+        char dstr[4];
+        dstr[0] = s[1];
+        dstr[1] = s[2];
+        dstr[2] = s[3];
+        dstr[3] = s[4];
+        timeout = charToInt(dstr);
+        Serial.print("delay: ");
+        Serial.println(timeout);
+        break;
+      default:
+        Serial.print("unknown command");
+        break;
     }
     Serial.print(String(s));
   }
 }
 
-int charToInt(char c[3]) {
+void setMode(char c) {
+  switch (c) {
+    case '0':
+      mode = 0;
+      Serial.print("mode0");
+      break;
+    case '1':
+      mode = 1;
+      Serial.print("mode1");
+      break;
+    default:
+      mode = 0;
+      break;
+  }
+}
+
+int charToInt(char c[4]) {
   int number = 0;
-  number = (c[0]  - '0') * 100;
-  number = number + ((c[1] - '0') * 10);
-  number = number + (c[2] - '0');
+  number = (c[0]  - '0') * 1000;
+  number = number + ((c[1]  - '0') * 100);
+  number = number + ((c[2] - '0') * 10);
+  number = number + (c[3] - '0');
   return number;
 }
+
+
 
 void loop() {
   //Serial.print("loop");
@@ -80,19 +125,42 @@ void loop() {
   for (int k = COLUMNS; k > 0; k--) {
     matrix[k] = matrix[k - 1];
   }
-
   matrix[0] = ledValue;
 
+  switch (mode) {
+    case 0:
+      mode0();
+      break;
+    case 1:
+      mode1();
+      break;
+    default:
+      mode0();
+      break;
+  }
+}
+
+void mode0() {
   turnOnTheLEDs();
-  delay(75);
+  delay(timeout);
+}
+
+int counter = 0;
+void mode1() {
+  counter++;
+  if (counter > COLUMNS) {
+    counter = 0;
+    turnOnTheLEDs();
+    delay(timeout);
+  }
 }
 
 void turnOnTheLEDs() {
   // go through columns
-  Serial.println();
+  //Serial.println();
   for (int i = 0; i < COLUMNS; i++) {
-    Serial.print(matrix[i]);
-    Serial.print(" ");
+    //Serial.print(matrix[i]);
+    //Serial.print(" ");
     int leds = matrix[i];
 
     for (int j = 0; j < ROWS; j++) {
